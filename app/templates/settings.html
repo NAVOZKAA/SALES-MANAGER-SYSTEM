@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}ShopManager - Paramètres{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h2 class="text-2xl font-bold">Configuration du Magasin</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <div class="bg-white p-8 rounded-3xl border border-gray-100 space-y-8">
+            <h3 class="font-bold text-gray-400 uppercase text-xs tracking-widest border-b border-gray-50 pb-4">Fonctionnement</h3>
+            
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="font-bold text-gray-800">Accepter les Commandes</p>
+                    <p class="text-xs text-gray-400">Si désactivé, les clients ne pourront plus commander.</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked class="sr-only peer">
+                    <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="font-bold text-gray-800">Confirmation Automatique</p>
+                    <p class="text-xs text-gray-400">Valider chaque commande dès réception.</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer">
+                    <div class="w-14 h-7 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all"></div>
+                </label>
+            </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-3xl border border-gray-100 space-y-6">
+            <h3 class="font-bold text-gray-400 uppercase text-xs tracking-widest border-b border-gray-50 pb-4">Informations Business</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Message d'accueil Boutique</label>
+                    <input type="text" value="Bienvenue chez ShopManager !" class="w-full p-3 bg-gray-50 rounded-xl border-none text-sm font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Contact Support (WhatsApp)</label>
+                    <input type="text" value="+33 6 00 00 00 00" class="w-full p-3 bg-gray-50 rounded-xl border-none text-sm font-medium">
+                </div>
+                <button class="w-full py-3 bg-gray-800 text-white font-bold rounded-xl hover:bg-gray-900 transition-all">Sauvegarder les modifications</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

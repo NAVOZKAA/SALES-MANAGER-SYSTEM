@@ -1,0 +1,38 @@
+<!-- Notification Dropdown Panel -->
+<div id="notification-panel"
+    class="hidden fixed right-6 top-20 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50">
+        <div class="flex items-center gap-2">
+            <h3 class="text-sm font-bold text-gray-800">Notifications</h3>
+            <span id="notif-header-count"
+                class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full"></span>
+        </div>
+        <button onclick="markAllRead()"
+            class="text-xs text-blue-600 hover:text-blue-800 font-semibold transition-colors">
+            Tout marquer lu
+        </button>
+    </div>
+
+    <!-- Notification list -->
+    <div id="notification-list" class="max-h-96 overflow-y-auto divide-y divide-gray-50">
+        <!-- Filled by JS -->
+        <div id="notif-loading" class="flex items-center justify-center py-10 text-gray-400 text-sm gap-2">
+            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+            </svg>
+            Chargement…
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-5 py-3 border-t border-gray-100 text-center">
+        <a href="{{ url_for('orders') }}" class="text-xs text-blue-600 hover:underline font-semibold">
+            Voir toutes les commandes →
+        </a>
+    </div>
+</div>

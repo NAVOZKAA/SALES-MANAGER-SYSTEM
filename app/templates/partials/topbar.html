@@ -1,0 +1,180 @@
+<!-- Topbar -->
+<header
+    class="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm">
+    <div class="flex items-center gap-6">
+        <div id="store-status"
+            class="flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-100">
+            <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+            <span class="text-xs font-bold uppercase tracking-wider">Boutique Ouverte</span>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-6">
+        <!-- Notification Bell -->
+        <div class="relative">
+            <button id="notif-btn" onclick="toggleNotifications()"
+                class="relative p-2 text-gray-400 hover:text-blue-600 transition-colors focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <!-- Badge -->
+                <span id="notif-badge"
+                    class="hidden absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white px-0.5">
+                    0
+                </span>
+            </button>
+
+            {% include "partials/notifications.html" %}
+        </div>
+
+        <!-- Profile -->
+        <div class="flex items-center gap-3 border-l border-gray-100 pl-6">
+            <div class="text-right hidden sm:block">
+                <p class="text-sm font-bold text-gray-800 leading-tight">Admin Principal</p>
+                <p class="text-xs text-blue-600 font-medium">Propriétaire</p>
+            </div>
+            <img src="https://ui-avatars.com/api/?name=Admin+Shop&background=0D8ABC&color=fff" alt="Profile"
+                class="w-10 h-10 rounded-xl shadow-inner object-cover">
+        </div>
+    </div>
+</header>
+
+<script>
+    // ─── Notification state ───────────────────────────────────────────
+    let _notifOpen = false;
+    let _readIds = JSON.parse(localStorage.getItem('notif_read') || '[]');
+
+    // ─── Color map: use inline styles to avoid Tailwind purge issues ──
+    const colorMap = {
+        blue: { bg: '#EFF6FF', border: '#BFDBFE' },
+        red: { bg: '#FEF2F2', border: '#FECACA' },
+        amber: { bg: '#FFFBEB', border: '#FDE68A' },
+        green: { bg: '#F0FDF4', border: '#BBF7D0' },
+        emerald: { bg: '#ECFDF5', border: '#6EE7B7' },
+        indigo: { bg: '#EEF2FF', border: '#C7D2FE' },
+        gray: { bg: '#F9FAFB', border: '#E5E7EB' },
+    };
+
+    function toggleNotifications() {
+        const panel = document.getElementById('notification-panel');
+        _notifOpen = !_notifOpen;
+        if (_notifOpen) {
+            panel.classList.remove('hidden');
+            loadNotifications();
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+
+    // Close panel when clicking outside
+    document.addEventListener('click', function (e) {
+        const btn = document.getElementById('notif-btn');
+        const panel = document.getElementById('notification-panel');
+        if (_notifOpen && !btn.contains(e.target) && !panel.contains(e.target)) {
+            panel.classList.add('hidden');
+            _notifOpen = false;
+        }
+    });
+
+    async function loadNotifications() {
+        const list = document.getElementById('notification-list');
+        const loading = document.getElementById('notif-loading');
+        if (loading) loading.style.display = 'flex';
+
+        try {
+            const res = await fetch('/api/notifications');
+            const data = await res.json();
+            renderNotifications(data.notifications || []);
+            updateBadge(data.notifications || []);
+        } catch (err) {
+            list.innerHTML = '<p class="text-center text-xs text-gray-400 py-8">Impossible de charger les notifications</p>';
+        }
+    }
+
+    function renderNotifications(items) {
+        const list = document.getElementById('notification-list');
+        const header = document.getElementById('notif-header-count');
+
+        const unread = items.filter(n => !_readIds.includes(n.id));
+        header.textContent = unread.length > 0 ? `${unread.length} non lues` : '';
+        header.style.display = unread.length > 0 ? '' : 'none';
+
+        if (items.length === 0) {
+            list.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                    <svg class="h-10 w-10 mb-2 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <p class="text-sm font-medium">Aucune notification</p>
+                </div>`;
+            return;
+        }
+
+        list.innerHTML = items.map(n => {
+            const c = colorMap[n.color] || colorMap.gray;
+            const isRead = _readIds.includes(n.id);
+            return `
+            <a href="${n.link}" onclick="markRead('${n.id}')"
+               class="flex items-start gap-3 px-5 py-4 hover:bg-gray-50 transition-colors cursor-pointer ${isRead ? 'opacity-60' : ''}">
+                <div class="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+                     style="background:${c.bg}; border:1px solid ${c.border}">
+                    ${n.icon}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-800 truncate">${n.title}</p>
+                    <p class="text-xs text-gray-500 mt-0.5 truncate">${n.message}</p>
+                </div>
+                <div class="flex-shrink-0 flex flex-col items-end gap-1">
+                    <span class="text-[10px] text-gray-400 whitespace-nowrap">${n.time}</span>
+                    ${!isRead ? '<span class="w-2 h-2 bg-blue-500 rounded-full"></span>' : ''}
+                </div>
+            </a>`;
+        }).join('');
+    }
+
+    function updateBadge(items) {
+        const badge = document.getElementById('notif-badge');
+        const unread = items.filter(n => !_readIds.includes(n.id));
+        if (unread.length > 0) {
+            badge.textContent = unread.length > 99 ? '99+' : unread.length;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    function markRead(id) {
+        if (!_readIds.includes(id)) {
+            _readIds.push(id);
+            localStorage.setItem('notif_read', JSON.stringify(_readIds));
+        }
+    }
+
+    function markAllRead() {
+        fetch('/api/notifications').then(r => r.json()).then(data => {
+            _readIds = (data.notifications || []).map(n => n.id);
+            localStorage.setItem('notif_read', JSON.stringify(_readIds));
+            renderNotifications(data.notifications || []);
+            updateBadge(data.notifications || []);
+        });
+    }
+
+    // Auto-load badge count on page load (non-blocking)
+    window.addEventListener('DOMContentLoaded', function () {
+        fetch('/api/notifications')
+            .then(r => r.json())
+            .then(data => updateBadge(data.notifications || []))
+            .catch(() => { });
+
+        // Refresh badge every 60 seconds silently
+        setInterval(function () {
+            fetch('/api/notifications')
+                .then(r => r.json())
+                .then(data => updateBadge(data.notifications || []))
+                .catch(() => { });
+        }, 60000);
+    });
+</script>

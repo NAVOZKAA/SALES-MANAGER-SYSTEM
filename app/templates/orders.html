@@ -1,0 +1,645 @@
+{% extends "base.html" %}
+
+{% block title %}ShopManager - Commandes{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h2 class="text-2xl font-bold">Gestion des Commandes</h2>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <table class="w-full text-left">
+            <thead class="bg-gray-50 border-b border-gray-100">
+                <tr>
+                    <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">ID Commande</th>
+                    <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Client</th>
+                    <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Total</th>
+                    <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Statut</th>
+                    <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+               {% for user_id, user_data in orders_by_user.items() %}
+
+                {% if user_data.orders|length == 1 %}
+                {# Single order - show directly #}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm font-mono text-blue-600">#ORD-{{ user_data.orders[0].id }}</td>
+                    <td class="px-6 py-4">
+                        <p class="text-sm font-bold text-gray-800">{{ user_data.user.name }}</p>
+                        <p class="text-xs text-green-600 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 0 5.415 0 12.05c0 2.12.554 4.189 1.607 6.013L0 24l6.135-1.61a11.771 11.771 0 005.911 1.603h.005c6.634 0 12.048-5.417 12.051-12.053a11.824 11.824 0 00-3.488-8.522z"/></svg>
+                            {{ user_data.user.phone }}
+                        </p>
+                    </td>
+                    <td class="px-6 py-4 text-sm font-bold">{{ user_data.orders[0].get_total_price()|float }} DH</td>
+                    <td class="px-6 py-4">
+                        <div class="relative">
+                            <button onclick="toggleStatusMenu(this, {{ user_data.orders[0].id }})" class="px-3 py-1.5 bg-yellow-50 text-yellow-700 text-[10px] font-extrabold rounded-lg uppercase hover:bg-yellow-100 transition-colors cursor-pointer">
+                                {{ user_data.orders[0].status }}
+                            </button>
+                            <div class="absolute hidden right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50" id="status-menu-{{ user_data.orders[0].id }}" data-order-id="{{ user_data.orders[0].id }}">
+                                <button onclick="changeStatus({{ user_data.orders[0].id }}, 'pending')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700 first:rounded-t-lg">Pending</button>
+                                <button onclick="changeStatus({{ user_data.orders[0].id }}, 'confirmed')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700">Confirmed</button>
+                                <button onclick="changeStatus({{ user_data.orders[0].id }}, 'processing')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700">Processing</button>
+                                <button onclick="changeStatus({{ user_data.orders[0].id }}, 'shipped')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700">Shipped</button>
+                                <button onclick="changeStatus({{ user_data.orders[0].id }}, 'delivered')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700">Delivered</button>
+                                <button onclick="changeStatus({{ user_data.orders[0].id }}, 'cancelled')" class="block w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-700 last:rounded-b-lg">Cancelled</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <button onclick="openOrderDetails({{ user_data.orders[0].id }})" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-1.5 rounded-lg transition-colors">Détails</button>
+                    </td>
+                </tr>
+
+                {% else %}
+                {# Multiple orders - show dropdown #}
+                <tr class="bg-gray-50 cursor-pointer hover:bg-gray-100" onclick="toggleOrders({{ user_id }})">
+                    <td colspan="5" class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-gray-800">{{ user_data.user.name }}</span>
+                            <span class="text-gray-500 text-sm">({{ user_data.orders|length }} Commandes)</span>
+                        </div>
+                    </td>
+                </tr>
+
+                <tbody id="orders-{{ user_id }}" class="hidden max-h-0 overflow-hidden transition-all duration-300 ease-in-out opacity-0">
+                    {% for order in user_data.orders %}
+                    <tr class="hover:bg-gray-50 border-l-4 border-blue-400">
+                        <td class="px-6 py-4 text-sm font-mono text-blue-600">#ORD-{{ order.id }}</td>
+                        <td class="px-6 py-4">
+                            <p class="text-sm font-bold text-gray-800">{{ user_data.user.name }}</p>
+                            <p class="text-xs text-green-600 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 0 5.415 0 12.05c0 2.12.554 4.189 1.607 6.013L0 24l6.135-1.61a11.771 11.771 0 005.911 1.603h.005c6.634 0 12.048-5.417 12.051-12.053a11.824 11.824 0 00-3.488-8.522z"/></svg>
+                                {{ user_data.user.phone }}
+                            </p>
+                        </td>
+                        <td class="px-6 py-4 text-sm font-bold">{{ order.get_total_price()|int }} DH</td>
+                        <td class="px-6 py-4">
+                            <div class="relative">
+                                <button onclick="toggleStatusMenu(this, {{ order.id }})" class="px-3 py-1.5 bg-yellow-50 text-yellow-700 text-[10px] font-extrabold rounded-lg uppercase hover:bg-yellow-100 transition-colors cursor-pointer">
+                                    {{ order.status }}
+                                </button>
+                                <div class="absolute hidden right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50" id="status-menu-{{ order.id }}" data-order-id="{{ order.id }}">
+                                    <button onclick="changeStatus({{ order.id }}, 'pending')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700 first:rounded-t-lg">Pending</button>
+                                    <button onclick="changeStatus({{ order.id }}, 'confirmed')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700">Confirmed</button>
+                                    <button onclick="changeStatus({{ order.id }}, 'processing')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700">Processing</button>
+                                    <button onclick="changeStatus({{ order.id }}, 'shipped')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700">Shipped</button>
+                                    <button onclick="changeStatus({{ order.id }}, 'delivered')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700">Delivered</button>
+                                    <button onclick="changeStatus({{ order.id }}, 'cancelled')" class="block w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-700 last:rounded-b-lg">Cancelled</button>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button onclick="openOrderDetails({{ order.id }})" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-1.5 rounded-lg transition-colors">Détails</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% endif %}
+
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div id="orderDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <h2 class="text-2xl font-bold text-gray-800">Détails de la Commande</h2>
+            <button onclick="closeOrderDetails()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="overflow-y-auto flex-1 p-6">
+            <div class="space-y-4">
+                <!-- Order header info -->
+                <div class="bg-gray-50 p-4 rounded-2xl">
+                    <h3 class="text-lg font-bold text-gray-800 mb-3">Commande #<span id="modalOrderId"></span></h3>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-500">Client</p>
+                            <p class="font-bold text-gray-800" id="modalClientName"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Téléphone</p>
+                            <p class="font-bold text-gray-800" id="modalClientPhone"></p>
+                        </div>
+                        <div class="col-span-2">
+                            <p class="text-gray-500">Adresse de Livraison</p>
+                            <p class="font-bold text-gray-800" id="modalClientAddress"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order items table -->
+                <div>
+                    <h4 class="text-lg font-bold text-gray-800 mb-3">Articles commandés</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-4 py-2 text-left font-bold text-gray-700">ID Produit</th>
+                                    <th class="px-4 py-2 text-left font-bold text-gray-700">Nom du Produit</th>
+                                    <th class="px-4 py-2 text-center font-bold text-gray-700">Quantité</th>
+                                    <th class="px-4 py-2 text-right font-bold text-gray-700">Prix Unitaire</th>
+                                    <th class="px-4 py-2 text-right font-bold text-gray-700">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderItemsTable" class="divide-y divide-gray-100">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Order total -->
+                <div class="bg-blue-50 p-4 rounded-2xl border-l-4 border-blue-400">
+                    <div class="flex items-center justify-between">
+                        <p class="text-lg font-bold text-gray-800">Total de la commande</p>
+                        <p class="text-2xl font-extrabold text-blue-600" id="modalOrderTotal"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="border-t border-gray-100 p-6 flex justify-end gap-3">
+            <button onclick="printOrder()" class="px-6 py-2 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Imprimer
+            </button>
+            <button onclick="closeOrderDetails()" class="px-6 py-2 rounded-lg border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-colors">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Store current order data for printing
+    let currentOrderData = {
+        orderId: null,
+        clientName: null,
+        clientPhone: null,
+        clientAddress: null,
+        items: [],
+        total: 0
+    };
+    function toggleStatusMenu(button, orderId) {
+        const menu = document.getElementById('status-menu-' + orderId);
+        if (menu) {
+            // Close all other menus first
+            const allMenus = document.querySelectorAll('[id^="status-menu-"]');
+            allMenus.forEach(m => {
+                if (m.id !== menu.id) {
+                    m.classList.add('hidden');
+                    m.classList.remove('mb-1', 'bottom-full');
+                    m.classList.add('mt-1');
+                }
+            });
+            
+            const isHidden = menu.classList.contains('hidden');
+            
+            if (isHidden) {
+                // Show the menu
+                menu.classList.remove('hidden');
+                
+                // Check if menu goes off bottom of viewport
+                setTimeout(() => {
+                    const rect = menu.getBoundingClientRect();
+                    const viewportHeight = window.innerHeight;
+                    const bottomSpace = viewportHeight - rect.bottom;
+                    
+                    // If less than 20px from bottom, position above
+                    if (bottomSpace < 20) {
+                        menu.classList.remove('mt-1');
+                        menu.classList.add('mb-1', 'bottom-full');
+                    } else {
+                        menu.classList.remove('mb-1', 'bottom-full');
+                        menu.classList.add('mt-1');
+                    }
+                }, 0);
+            } else {
+                // Hide the menu
+                menu.classList.add('hidden');
+                menu.classList.remove('mb-1', 'bottom-full');
+                menu.classList.add('mt-1');
+            }
+            
+            event.stopPropagation();
+        }
+    }
+
+    // Change order status
+    async function changeStatus(orderId, newStatus) {
+        try {
+            const response = await fetch('/update-order-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    order_id: orderId,
+                    status: newStatus
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Update the button text and colors
+                const button = document.querySelector(`button[onclick*="toggleStatusMenu(this, ${orderId})"]`);
+                if (button) {
+                    button.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                    // Reset classes
+                    button.className = 'px-3 py-1.5 rounded-lg uppercase hover:bg-opacity-80 transition-colors cursor-pointer text-xs font-extrabold inline-block ';
+                    // Add color classes based on status
+                    if (newStatus === 'pending') button.classList.add('bg-yellow-100', 'text-yellow-700');
+                    else if (newStatus === 'confirmed') button.classList.add('bg-blue-100', 'text-blue-700');
+                    else if (newStatus === 'processing') button.classList.add('bg-purple-100', 'text-purple-700');
+                    else if (newStatus === 'shipped') button.classList.add('bg-indigo-100', 'text-indigo-700');
+                    else if (newStatus === 'delivered') button.classList.add('bg-green-100', 'text-green-700');
+                    else if (newStatus === 'cancelled') button.classList.add('bg-red-100', 'text-red-700');
+                    else button.classList.add('bg-gray-100', 'text-gray-700');
+                }
+                
+                // Hide the menu
+                const menu = document.getElementById('status-menu-' + orderId);
+                if (menu) {
+                    menu.classList.add('hidden');
+                    menu.classList.remove('mb-1', 'bottom-full');
+                    menu.classList.add('mt-1');
+                }
+
+                // Show success message
+                showToast(`Status updated to ${newStatus}`, '✓');
+            } else {
+                showToast(`Error: ${data.error}`, '✗');
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            showToast('Error updating status', '✗');
+        }
+    }
+
+    // Close menus when clicking outside
+    document.addEventListener('click', function(e) {
+        const menus = document.querySelectorAll('[id^="status-menu-"]');
+        menus.forEach(menu => {
+            if (!menu.classList.contains('hidden') && !e.target.closest('[id^="status-menu-"]') && !e.target.closest('button[onclick*="toggleStatusMenu"]')) {
+                menu.classList.add('hidden');
+                menu.classList.remove('mb-1', 'bottom-full');
+                menu.classList.add('mt-1');
+            }
+        });
+    });
+
+    function toggleOrders(userId) {
+        const element = document.getElementById('orders-' + userId);
+        if (element) {
+            const isHidden = element.classList.contains('hidden');
+            
+            if (isHidden) {
+                // Show with animation
+                element.classList.remove('hidden');
+                setTimeout(() => {
+                    element.classList.remove('max-h-0', 'opacity-0');
+                    element.classList.add('max-h-screen', 'opacity-100');
+                }, 10);
+            } else {
+                // Hide with animation
+                element.classList.add('max-h-0', 'opacity-0');
+                element.classList.remove('max-h-screen', 'opacity-100');
+                setTimeout(() => {
+                    element.classList.add('hidden');
+                }, 300);
+            }
+        }
+    }
+
+    // Order Details Modal
+    function openOrderDetails(orderId) {
+        // Find the order data from the page
+        const orderRow = document.querySelector(`button[onclick*="toggleStatusMenu(this, ${orderId})"]`)?.closest('tr');
+        
+        if (!orderRow) {
+            showToast('Order not found', '✗');
+            return;
+        }
+
+        // Extract data from the page
+        const orderIdText = orderRow.cells[0].textContent.replace('#ORD-', '');
+        const clientName = orderRow.cells[1].querySelector('.font-bold').textContent;
+        const clientPhone = orderRow.cells[1].querySelector('.text-green-600').textContent.trim();
+
+        // Store order data for printing
+        currentOrderData.orderId = orderId;
+        currentOrderData.clientName = clientName;
+        currentOrderData.clientPhone = clientPhone;
+
+        // Show modal
+        document.getElementById('orderDetailsModal').classList.remove('hidden');
+        document.getElementById('modalOrderId').textContent = orderId;
+        document.getElementById('modalClientName').textContent = clientName;
+        document.getElementById('modalClientPhone').textContent = clientPhone;
+
+        // Fetch order items from API
+        fetch(`/api/orders/${orderId}`)
+            .then(r => r.json())
+            .then(order => {
+                // Set address from API response
+                document.getElementById('modalClientAddress').textContent = order.user.address || 'Non spécifiée';
+                displayOrderItems(order);
+            })
+            .catch(err => {
+                console.error('Error fetching order:', err);
+                showToast('Error loading order items', '✗');
+            });
+    }
+
+    function displayOrderItems(order) {
+        const itemsTable = document.getElementById('orderItemsTable');
+        itemsTable.innerHTML = '';
+        let total = 0;
+        
+        // Clear previous items
+        currentOrderData.items = [];
+        currentOrderData.clientAddress = order.user.address || 'Non spécifiée';
+
+        order.items.forEach(item => {
+            const rowTotal = item.unit_price * item.quantity;
+            total += rowTotal;
+            
+            // Store item for printing
+            currentOrderData.items.push({
+                product_id: item.product_id,
+                product_name: item.product_name,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                rowTotal: rowTotal
+            });
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-4 py-3 text-blue-600 font-mono">#${item.product_id}</td>
+                <td class="px-4 py-3">
+                    <div class="font-bold text-gray-800">${item.product_name}</div>
+                    <div class="text-xs text-gray-500">SKU: PRD-${item.product_id}</div>
+                </td>
+                <td class="px-4 py-3 text-center font-bold text-gray-800">${item.quantity}</td>
+                <td class="px-4 py-3 text-right text-gray-700">${item.unit_price} DH</td>
+                <td class="px-4 py-3 text-right font-bold text-gray-800">${rowTotal} DH</td>
+            `;
+            itemsTable.appendChild(row);
+        });
+
+        currentOrderData.total = order.total_price;
+        document.getElementById('modalOrderTotal').textContent = order.total_price + ' DH';
+    }
+
+    function closeOrderDetails() {
+        document.getElementById('orderDetailsModal').classList.add('hidden');
+        document.getElementById('orderItemsTable').innerHTML = '';
+    }
+
+    // Print order as receipt
+    function printOrder() {
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('fr-FR');
+        const timeStr = today.toLocaleTimeString('fr-FR');
+
+        let itemsHTML = '';
+        let subtotal = 0;
+
+        currentOrderData.items.forEach(item => {
+            itemsHTML += `
+                <tr>
+                    <td class="py-2">${item.product_name}</td>
+                    <td class="text-center" style="width: 60px;">${item.quantity}</td>
+                    <td class="text-right" style="width: 80px;">${item.unit_price} DH</td>
+                    <td class="text-right" style="width: 80px; font-weight: bold;">${item.rowTotal} DH</td>
+                </tr>
+            `;
+            subtotal += item.rowTotal;
+        });
+
+        const receiptHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Reçu Commande #${currentOrderData.orderId}</title>
+                <style>
+                    body {
+                        font-family: 'Courier New', monospace;
+                        margin: 0;
+                        padding: 20px;
+                        background-color: #f5f5f5;
+                    }
+                    .receipt {
+                        background-color: white;
+                        width: 80mm;
+                        margin: 0 auto;
+                        padding: 20px;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    }
+                    .header {
+                        text-align: center;
+                        border-bottom: 2px solid #000;
+                        padding-bottom: 15px;
+                        margin-bottom: 15px;
+                    }
+                    .store-name {
+                        font-size: 18px;
+                        font-weight: bold;
+                        margin-bottom: 5px;
+                    }
+                    .receipt-title {
+                        font-size: 14px;
+                        font-weight: bold;
+                        margin-bottom: 10px;
+                    }
+                    .receipt-number {
+                        font-size: 12px;
+                        margin-bottom: 5px;
+                    }
+                    .date-time {
+                        font-size: 11px;
+                        color: #666;
+                        margin-bottom: 10px;
+                    }
+                    .customer-info {
+                        background-color: #f9f9f9;
+                        padding: 10px;
+                        border-radius: 5px;
+                        margin-bottom: 15px;
+                        font-size: 12px;
+                    }
+                    .customer-info-label {
+                        color: #666;
+                        font-size: 10px;
+                        text-transform: uppercase;
+                    }
+                    .customer-info-value {
+                        font-weight: bold;
+                        margin-bottom: 5px;
+                    }
+                    table {
+                        width: 100%;
+                        margin-bottom: 15px;
+                        font-size: 12px;
+                    }
+                    table th {
+                        text-align: left;
+                        border-bottom: 1px solid #000;
+                        padding: 8px 0;
+                        font-weight: bold;
+                        font-size: 11px;
+                    }
+                    table td {
+                        padding: 5px 0;
+                    }
+                    .divider {
+                        border-bottom: 1px solid #000;
+                        margin: 10px 0;
+                    }
+                    .totals {
+                        margin-bottom: 15px;
+                    }
+                    .total-row {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 5px 0;
+                        font-size: 12px;
+                    }
+                    .subtotal-row {
+                        font-size: 11px;
+                        color: #666;
+                    }
+                    .grand-total {
+                        font-size: 16px;
+                        font-weight: bold;
+                        border-top: 2px solid #000;
+                        border-bottom: 2px solid #000;
+                        padding: 10px 0;
+                        margin: 10px 0;
+                    }
+                    .footer {
+                        text-align: center;
+                        font-size: 11px;
+                        border-top: 1px solid #999;
+                        padding-top: 10px;
+                        color: #666;
+                    }
+                    .thank-you {
+                        text-align: center;
+                        font-size: 12px;
+                        font-weight: bold;
+                        margin-bottom: 10px;
+                    }
+                    @media print {
+                        body {
+                            background-color: white;
+                        }
+                        .receipt {
+                            box-shadow: none;
+                            width: 80mm;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="receipt">
+                    <!-- Header -->
+                    <div class="header">
+                        <div class="store-name">SHOPMANAGER</div>
+                        <div class="receipt-title">═══════════════════</div>
+                        <div class="receipt-title">REÇU DE VENTE</div>
+                        <div class="receipt-title">═══════════════════</div>
+                    </div>
+
+                    <!-- Order Info -->
+                    <div class="receipt-number">Commande #${currentOrderData.orderId}</div>
+                    <div class="date-time">${dateStr} à ${timeStr}</div>
+
+                    <!-- Customer Info -->
+                    <div class="customer-info">
+                        <div class="customer-info-label">👤 Client</div>
+                        <div class="customer-info-value">${currentOrderData.clientName}</div>
+                        <div class="customer-info-label">📱 Tél</div>
+                        <div class="customer-info-value">${currentOrderData.clientPhone}</div>
+                        <div class="customer-info-label">📍 Adresse</div>
+                        <div class="customer-info-value">${currentOrderData.clientAddress}</div>
+                    </div>
+
+                    <!-- Items Table -->
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Article</th>
+                                <th style="text-align: center; width: 60px;">Qté</th>
+                                <th style="text-align: right; width: 80px;">P.U.</th>
+                                <th style="text-align: right; width: 80px;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+
+                    <div class="divider"></div>
+
+                    <!-- Totals -->
+                    <div class="totals">
+                        <div class="total-row subtotal-row">
+                            <span>Sous-Total:</span>
+                            <span>${subtotal} DH</span>
+                        </div>
+                        <div class="grand-total">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>TOTAL TTC:</span>
+                                <span>${currentOrderData.total} DH</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="thank-you">
+                        ✨ Merci de Votre Visite ✨
+                    </div>
+                    <div class="footer">
+                        ShopManager - Gestion de Boutique
+                        <br>Conservez votre reçu
+                        <br>___________________________
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+        const printWindow = window.open('', '', 'width=400,height=600');
+        printWindow.document.write(receiptHTML);
+        printWindow.document.close();
+        
+        setTimeout(() => {
+            printWindow.print();
+        }, 250);
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('orderDetailsModal');
+        modal?.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeOrderDetails();
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,520 @@
+{% extends "base.html" %}
+
+{% block title %}ShopManager - Tableau de bord{% endblock %}
+
+{% block extra_head %}
+<!-- ApexCharts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome/Header with Date Filters -->
+<div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
+    <div>
+        <h2 class="text-3xl font-bold text-slate-800 tracking-tight">Vue d'ensemble</h2>
+        <p class="text-slate-500 mt-1">Gérez votre activité et analysez vos performances.</p>
+    </div>
+    <div class="mt-4 md:mt-0 inline-flex bg-slate-100/50 p-1 rounded-lg border border-slate-200" id="date-filters">
+        <button data-days="7"
+            class="date-filter active px-4 py-2 text-sm font-semibold rounded-md bg-[#1e3a8a] text-white shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]">Semaine</button>
+        <button data-days="30"
+            class="date-filter px-4 py-2 text-sm font-semibold rounded-md text-slate-600 hover:text-slate-800 hover:bg-white transition-all focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]">Mois</button>
+        <button data-days="365"
+            class="date-filter px-4 py-2 text-sm font-semibold rounded-md text-slate-600 hover:text-slate-800 hover:bg-white transition-all focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]">Année</button>
+    </div>
+</div>
+
+<!-- 8 KPI Cards (2 rows x 4 cols) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Revenue -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-rose-100 flex items-center justify-center text-rose-500 shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Chiffre d'affaires</p>
+                <h3 class="text-2xl font-extrabold text-slate-800">{{ total_revenue|default(0)|int }} DH</h3>
+            </div>
+        </div>
+        {% if revenue_comparison.can_compare %}
+        <div
+            class="mt-3 text-[11px] font-semibold flex items-center {% if revenue_comparison.is_increase %}text-[#10b981]{% else %}text-rose-500{% endif %}">
+            {{ revenue_comparison.display_value }} vs hier
+        </div>
+        {% else %}
+        <div class="mt-3 text-[11px] font-semibold text-slate-400">N/A vs hier</div>
+        {% endif %}
+    </div>
+
+    <!-- Orders -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Commandes</p>
+                <h3 class="text-2xl font-extrabold text-slate-800">{{ orders|length }}</h3>
+            </div>
+        </div>
+        {% if orders_comparison.can_compare %}
+        <div
+            class="mt-3 text-[11px] font-semibold flex items-center {% if orders_comparison.is_increase %}text-[#10b981]{% else %}text-rose-500{% endif %}">
+            {{ orders_comparison.display_value }} vs mois dernier
+        </div>
+        {% else %}
+        <div class="mt-3 text-[11px] font-semibold text-slate-400">N/A vs mois dernier</div>
+        {% endif %}
+    </div>
+
+    <!-- Customers -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Clients</p>
+                <h3 class="text-2xl font-extrabold text-slate-800">{{ users|length }}</h3>
+            </div>
+        </div>
+        <div class="mt-3 text-[11px] font-semibold text-slate-400">Total base clients</div>
+    </div>
+
+    <!-- Products -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center text-violet-600 shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Produits Actifs</p>
+                <h3 class="text-2xl font-extrabold text-slate-800">{{ products|length }}</h3>
+            </div>
+        </div>
+        <div class="mt-3 text-[11px] font-semibold text-slate-400">En catalogue</div>
+    </div>
+
+    <!-- Profit (Mocked) -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Profit (Est.)</p>
+                <h3 class="text-2xl font-extrabold text-slate-800">{{ profit|default(0)|int }} DH</h3>
+            </div>
+        </div>
+        <div class="mt-3 text-[11px] font-semibold text-slate-400">Basé sur 25% de marge</div>
+    </div>
+
+    <!-- Avg Order -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500 shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Panier Moyen</p>
+                <h3 class="text-2xl font-extrabold text-slate-800">{{ avg_order|default(0)|int }} DH</h3>
+            </div>
+        </div>
+        <div class="mt-3 text-[11px] font-semibold text-slate-400">Par commande confirmée</div>
+    </div>
+
+    <!-- Conversion -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center text-teal-600 shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Taux Conv.</p>
+                <h3 class="text-2xl font-extrabold text-slate-800">{{ conversion_rate }}%</h3>
+            </div>
+        </div>
+        <div class="mt-3 text-[11px] font-semibold text-slate-400">Visites / Achat (Est.)</div>
+    </div>
+
+    <!-- Pending / Action -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">En Attente</p>
+                <h3 class="text-2xl font-extrabold text-amber-600">{{ pending_confirmed_count|default(0) }}</h3>
+            </div>
+        </div>
+        <a href="{{ url_for('orders') }}"
+            class="mt-3 text-amber-600 text-[11px] font-bold hover:underline flex items-center">
+            Traiter maintenant
+            <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </a>
+    </div>
+</div>
+
+<!-- 3 Charts Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Sales Trend (Line Chart) -->
+    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div class="mb-4">
+            <h4 class="text-lg font-bold text-slate-800">Tendance des Ventes</h4>
+            <p class="text-xs text-slate-500">Chiffre d'affaires et volume</p>
+        </div>
+        <div id="salesTrendChart" class="h-80 w-full"></div>
+    </div>
+
+    <!-- Revenue by Status (Donut Chart) -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div class="mb-4">
+            <h4 class="text-lg font-bold text-slate-800">Revenus par Statut</h4>
+            <p class="text-xs text-slate-500">Répartition globale</p>
+        </div>
+        <div id="revenueStatusChart" class="h-80 w-full flex items-center justify-center"></div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Top Products (Bar Chart) -->
+    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div class="mb-4">
+            <h4 class="text-lg font-bold text-slate-800">Top 5 Produits</h4>
+            <p class="text-xs text-slate-500">Par quantité vendue</p>
+        </div>
+        <div id="topProductsChart" class="h-80 w-full"></div>
+    </div>
+
+    <!-- Recent Orders (List) -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div class="flex items-center justify-between mb-4">
+            <h4 class="text-lg font-bold text-slate-800">Activité Récente</h4>
+        </div>
+        <div class="space-y-4">
+            {% for order in recent_orders[:4] %}
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-full {% if order.status == 'pending' %}bg-amber-100 text-amber-700{% elif order.status == 'delivered' %}bg-green-100 text-green-700{% else %}bg-[#1e3a8a]/10 text-[#1e3a8a]{% endif %} flex items-center justify-center font-bold text-sm shrink-0">
+                    {{ order.id|string|first|upper }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-slate-800 truncate">Commande #{{ order.id }}</p>
+                    <p class="text-xs text-slate-500 truncate">{{ order.user.name if order.user else 'Client' }}</p>
+                </div>
+                <div class="text-right shrink-0">
+                    <p class="text-sm font-bold text-slate-800">{{ order.get_total_price()|default(0)|int }} DH</p>
+                    <p class="text-[10px] uppercase font-bold text-slate-400">{{ order.status }}</p>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-sm text-slate-500">Aucune commande récente</p>
+            {% endfor %}
+            <a href="{{ url_for('orders') }}"
+                class="w-full mt-4 py-2 block text-center text-sm text-[#1e3a8a] font-bold hover:underline">Voir toutes
+                les commandes</a>
+        </div>
+    </div>
+</div>
+
+<!-- Raw data for JS -->
+<script>
+    // Server data injections
+    const rawChartData = {{ chart_data | tojson | safe }};
+    const rawRevenueByStatus = {{ revenue_by_status | tojson | safe }};
+    const rawTopProducts = {{ top_products | tojson | safe }};
+</script>
+
+<script>
+    let salesChartInstance = null;
+
+    function formatDH(value) {
+        return value.toFixed(0) + " DH";
+    }
+
+    // Initialize charts
+    function initApexCharts() {
+        // 1. Sales Trend (Line/Area Chart)
+        initSalesChart(rawChartData);
+
+        // 2. Revenue By Status (Donut)
+        const statusColors = {
+            'pending': '#f59e0b', // Amber
+            'confirmed': '#3b82f6', // Blue
+            'processing': '#8b5cf6', // Violet
+            'shipped': '#6366f1', // Indigo
+            'delivered': '#10b981', // Green
+            'cancelled': '#ef4444' // Red
+        };
+
+        let activeStatuses = Object.keys(rawRevenueByStatus).filter(k => rawRevenueByStatus[k] > 0);
+        let statusValues = activeStatuses.map(k => rawRevenueByStatus[k]);
+        let statusLabels = activeStatuses.map(k => k.charAt(0).toUpperCase() + k.slice(1));
+        let donutColors = activeStatuses.map(k => statusColors[k] || '#cbd5e1');
+
+        if (statusValues.length === 0) {
+            statusValues = [1];
+            statusLabels = ['No Data'];
+            donutColors = ['#f1f5f9'];
+        }
+
+        const donutOptions = {
+            series: statusValues,
+            labels: statusLabels,
+            colors: donutColors,
+            chart: {
+                type: 'donut',
+                height: 320,
+                fontFamily: 'inherit'
+            },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '70%',
+                        labels: {
+                            show: true,
+                            name: { show: true },
+                            value: {
+                                show: true,
+                                formatter: function (val) { return formatDH(val); }
+                            },
+                            total: {
+                                show: true,
+                                label: 'Total',
+                                formatter: function (w) {
+                                    return formatDH(w.globals.seriesTotals.reduce((a, b) => a + b, 0));
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            dataLabels: { enabled: false },
+            stroke: { show: false },
+            tooltip: {
+                y: { formatter: function (val) { return formatDH(val); } }
+            },
+            legend: {
+                position: 'bottom',
+                horizontalAlign: 'center'
+            }
+        };
+        new ApexCharts(document.querySelector("#revenueStatusChart"), donutOptions).render();
+
+        // 3. Top Products (Bar)
+        let productNames = rawTopProducts.map(p => p.name);
+        let productQuantities = rawTopProducts.map(p => p.quantity);
+
+        const barOptions = {
+            series: [{
+                name: 'Quantité vendue',
+                data: productQuantities
+            }],
+            chart: {
+                type: 'bar',
+                height: 320,
+                fontFamily: 'inherit',
+                toolbar: { show: false }
+            },
+            colors: ['#1e3a8a'],
+            plotOptions: {
+                bar: {
+                    borderRadius: 4,
+                    horizontal: true,
+                    barHeight: '40px',
+                    dataLabels: { position: 'top' }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                offsetX: 20,
+                style: {
+                    fontSize: '12px',
+                    colors: ['#304758']
+                }
+            },
+            stroke: { show: false },
+            xaxis: {
+                categories: productNames,
+                labels: { show: false },
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        fontWeight: 600,
+                        colors: '#475569'
+                    }
+                }
+            },
+            grid: {
+                show: false
+            }
+        };
+        new ApexCharts(document.querySelector("#topProductsChart"), barOptions).render();
+    }
+
+    // Function to render or update Sales Chart
+    function initSalesChart(data) {
+        const trendOptions = {
+            series: [
+                {
+                    name: 'Revenus (DH)',
+                    type: 'area',
+                    data: data.revenue
+                },
+                {
+                    name: 'Commandes',
+                    type: 'line',
+                    data: data.orders_count
+                }
+            ],
+            chart: {
+                height: 320,
+                type: 'line',
+                fontFamily: 'inherit',
+                toolbar: { show: false },
+                zoom: { enabled: false }
+            },
+            colors: ['#10b981', '#1e3a8a'],
+            stroke: {
+                width: [2, 3],
+                curve: 'smooth'
+            },
+            fill: {
+                type: ['gradient', 'solid'],
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.3,
+                    opacityTo: 0.05,
+                    stops: [0, 100]
+                }
+            },
+            dataLabels: { enabled: false },
+            labels: data.labels,
+            xaxis: {
+                type: 'category', // Just use category to avoid JS Date offset issues with strings
+                tickAmount: data.labels.length > 10 ? 10 : data.labels.length,
+                labels: {
+                    style: { colors: '#64748b' },
+                    formatter: function (val) {
+                        if (!val) return '';
+                        // Basic format for YYYY-MM-DD
+                        const parts = val.split('-');
+                        if (parts.length === 3) return parts[2] + '/' + parts[1];
+                        return val;
+                    }
+                },
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            },
+            yaxis: [
+                {
+                    title: { text: "Revenus (DH)", style: { color: '#10b981', fontWeight: 600 } },
+                    labels: { style: { colors: '#10b981' }, formatter: function (val) { return val.toFixed(0); } }
+                },
+                {
+                    opposite: true,
+                    title: { text: "Commandes", style: { color: '#1e3a8a', fontWeight: 600 } },
+                    labels: { style: { colors: '#1e3a8a' }, formatter: function (val) { return val.toFixed(0); } }
+                }
+            ],
+            grid: {
+                borderColor: '#f1f5f9',
+                strokeDashArray: 4,
+                yaxis: { lines: { show: true } }
+            },
+            legend: {
+                position: 'top',
+                horizontalAlign: 'right'
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: [
+                    { formatter: function (y) { return typeof y !== "undefined" ? y.toFixed(0) + " DH" : y; } },
+                    { formatter: function (y) { return typeof y !== "undefined" ? y.toFixed(0) + " cmds" : y; } }
+                ]
+            }
+        };
+
+        if (salesChartInstance) {
+            salesChartInstance.destroy();
+        }
+        salesChartInstance = new ApexCharts(document.querySelector("#salesTrendChart"), trendOptions);
+        salesChartInstance.render();
+    }
+
+    // Refresh data via API
+    async function updateDashboardData(days) {
+        try {
+            const res = await fetch(`/api/chart-data?days=${days}`);
+            if (!res.ok) throw new Error("Failed to fetch");
+            const data = await res.json();
+            initSalesChart(data);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        initApexCharts();
+
+        // Date Filters
+        const filters = document.querySelectorAll('.date-filter');
+        filters.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // Remove active class from all
+                filters.forEach(f => {
+                    f.classList.remove('bg-[#1e3a8a]', 'text-white', 'shadow-sm', 'active');
+                    f.classList.add('text-slate-600');
+                });
+
+                // Add active to clicked
+                const target = e.currentTarget;
+                target.classList.remove('text-slate-600');
+                target.classList.add('bg-[#1e3a8a]', 'text-white', 'shadow-sm', 'active');
+
+                const days = target.getAttribute('data-days');
+                updateDashboardData(days);
+            });
+        });
+    });
+</script>
+{% endblock %}
